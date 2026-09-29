@@ -177,7 +177,8 @@ if(synth){synth.getVoices();synth.onvoiceschanged=()=>synth.getVoices()}
 function speechText(t){
   let s=String(t||'').replace(/<[^>]*>/g,' ');
   s=Array.from(s).filter(ch=>{const c=ch.codePointAt(0);return c<0x2190||(c>=0x3000&&c<0x1F000&&c!==0xFE0F)}).join('');
-  s=s.replace(/NP([0-9]+) ?S([0-9]+) ?(?:Point|P) ?([0-9]+)/g,'Nearpod $1, slide $2, point $3').replace(/NP([0-9]+) ?S([0-9]+)/g,'Nearpod $1, slide $2').replace(/Pages? ([0-9]+)–([0-9]+)/g,'pages $1 to $2').replace(/Nearpod: Nearpod/g,'Nearpod');
+  s=s.replace(/NP([0-9]+) ?S([0-9]+) ?(?:Point|P) ?([0-9]+)/g,'Nearpod $1, slide $2, point $3').replace(/NP([0-9]+) ?S([0-9]+)/g,'Nearpod $1, slide $2').replace(/Pages? ([0-9]+)–([0-9]+)/g,'pages $1 to $2').replace(/Nearpod: Nearpod/g,'Nearpod').replace(/BodE/g,'Body');
+  // Spoken only: the teacher wants "BodE" said like "body" (not "bode"). The written name stays BodE.
   return s.split(' ').filter(Boolean).join(' ').trim();
 }
 function pickVoice(localOnly){
@@ -220,7 +221,7 @@ function startMic(){
   recognizer.onresult=e=>{let interim='';for(let i=e.resultIndex;i<e.results.length;i++){const t=e.results[i][0].transcript;if(e.results[i].isFinal)finals+=t.trim()+' ';else interim+=t}box.value=(before+finals+interim).slice(0,4000)};
   recognizer.onerror=e=>{micError=MIC_ERRORS[e.error]||'Talking stopped. You can still type your answer.';micMessage(micError)};
   recognizer.onend=()=>{listening=false;setMicButton(false);box.value=box.value.trim();if(!micError)micMessage('Done. Read the words in the box and fix any mistakes, then press Check my answer.')};
-  try{recognizer.start();listening=true;setMicButton(true);micMessage('Listening… Speak clearly. Press Stop speaking when you finish.')}
+  try{recognizer.start();listening=true;setMicButton(true);micMessage('Listening… Wait one second, then speak clearly. Press Stop speaking when you finish.')}
   catch{listening=false;setMicButton(false);micMessage('The microphone could not start. You can still type your answer.')}
 }
 function applyVoiceUi(){
