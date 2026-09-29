@@ -18,7 +18,9 @@ button{font:inherit;border:0;border-radius:10px;padding:10px 14px;cursor:pointer
 .voice-bar{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:10px 0 2px}
 .voice-toggle[aria-pressed="true"]{background:#0b7285;color:#fff}.voice-note{font-size:13px;color:#546e7a;margin-top:6px;line-height:1.4}
 .mic-listening{background:#b71c1c!important;color:#fff!important}.nudge{background:#f3e5f5;border:1px solid #ce93d8}
-button:focus-visible{outline:3px solid #ffb300;outline-offset:2px}button:disabled{opacity:.55;cursor:not-allowed}
+button:focus-visible{outline:3px solid #ffb300;outline-offset:2px}
+.voice-guide{max-width:600px;margin:6px auto 2px;background:#f7fbfc;border:1px solid #c7dfe3;border-radius:12px;padding:8px 14px;line-height:1.5}
+.voice-guide summary{cursor:pointer;font-weight:700;text-align:center;color:#0b7285}.voice-guide ol{margin:8px 0 8px 20px;padding:0}.voice-guide li{margin:4px 0}button:disabled{opacity:.55;cursor:not-allowed}
 @media(max-width:600px){body{padding:10px}.card{padding:18px}h1{font-size:23px}}
 </style><style>
 .access-gate{position:fixed;inset:0;z-index:10000;display:grid;place-items:center;padding:24px;background:rgba(9,27,45,.94)}
@@ -60,6 +62,20 @@ window.answerChecker=(()=>{
 <div id="bodeGreeting" class="bode-bubble hidden" role="status" aria-live="polite"></div>
 <div class="voice-bar"><button class="secondary voice-toggle" id="voiceBtn" type="button" aria-pressed="false">🔈 Voice mode: Off</button><button class="secondary hidden" id="speakAgainBtn" type="button">🔊 Read again</button></div>
 <div id="voiceHelp" class="voice-note hidden" style="text-align:center"></div>
+<details id="voiceGuide" class="voice-guide"><summary>❓ How to use Voice mode</summary>
+<div id="voiceGuideText"><ol>
+<li>Press <strong>Voice mode: Off</strong> to turn it on. BodE will talk to you.</li>
+<li>BodE reads your feedback, hints and references out loud. Press <strong>Read again</strong> to hear it again.</li>
+<li>Press <strong>Read the question to me</strong> to hear the question.</li>
+<li>To talk instead of typing, press <strong>Speak my answer</strong>. If the browser asks, press <strong>Allow</strong>.</li>
+<li>Wait one second, then speak slowly and clearly. Press <strong>Stop speaking</strong> when you finish.</li>
+<li>Read the words in the box. Fix any wrong words by typing. Then press <strong>Check my answer</strong>.</li>
+<li>In class, please use headphones.</li>
+<li>To turn it off, press <strong>Voice mode: On</strong>.</li>
+</ol>
+<p><strong>Privacy:</strong> When you use the microphone, your voice goes to Google (Chrome) or Microsoft (Edge) to change it into words. Do not say names or personal details.</p></div>
+<div class="row" style="justify-content:center;margin-top:4px"><button class="secondary" id="readGuideBtn" type="button">🔊 Read this guide to me</button></div>
+</details>
 <div class="version" id="version">Select a unit and assessment</div>
 <label>Unit</label><select id="unit"><option value="">-- Select a unit --</option></select>
 <div id="assessmentWrap" class="hidden"><label>Assessment</label><select id="assessment"><option value="">-- Select assessment --</option></select></div>
@@ -186,8 +202,8 @@ function pickVoice(localOnly){
   const score=v=>(/AU/i.test(v.lang)?40:/GB/i.test(v.lang)?20:/US/i.test(v.lang)?10:0)+(/natural/i.test(v.name)?6:0)+(v.localService?1:0);
   return english.sort((a,b)=>score(b)-score(a))[0]||null;
 }
-function speak(text){
-  if(!voiceOn||!synth)return;
+function speak(text,force){
+  if((!voiceOn&&!force)||!synth)return;
   const clean=speechText(text);if(!clean)return;
   lastSpoken=clean;synth.cancel();
   const say=(voice,retry)=>{
@@ -200,7 +216,7 @@ function speak(text){
   };
   const first=pickVoice(false);
   setTimeout(()=>say(first,!!(first&&!first.localService)),60);
-  $('speakAgainBtn').className='secondary';
+  if(voiceOn)$('speakAgainBtn').className='secondary';
 }
 function micMessage(t){const m=$('micStatus');m.textContent=t;m.className=t?'helper':'helper hidden'}
 function stopMic(){if(recognizer&&listening){try{recognizer.stop()}catch{}}}
@@ -290,6 +306,9 @@ $('voiceBtn').onclick=()=>setVoice(!voiceOn,true);
 $('speakAgainBtn').onclick=()=>{if(lastSpoken)speak(lastSpoken)};
 $('micBtn').onclick=()=>{if(listening)stopMic();else startMic()};
 $('readQBtn').onclick=()=>speak($('questionText').textContent+'. '+$('recQty').textContent);
+$('readGuideBtn').onclick=()=>speak('How to use Voice mode. '+Array.from(document.querySelectorAll('#voiceGuideText li,#voiceGuideText p')).map(x=>x.textContent).join(' '),true);
+$('voiceGuide').addEventListener('toggle',()=>{if(!$('voiceGuide').open&&synth)synth.cancel()});
+if(!synth)$('readGuideBtn').style.display='none';
 try{voiceOn=sessionStorage.getItem(VOICE_KEY)==='on'&&!!synth}catch{}
 if(!synth)$('voiceBtn').disabled=true;
 applyVoiceUi();
