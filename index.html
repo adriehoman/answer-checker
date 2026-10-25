@@ -165,7 +165,7 @@ window.answerChecker=(()=>{
 <details class="help-topic" id="help-settings"><summary>⚙️ Settings</summary><div class="topic-body"><ul><li>Choose BodE's voice and reading speed.</li><li>Choose the English accent closest to yours. It helps the microphone understand you.</li><li>Make the text bigger, or turn on high contrast (darker text).</li><li>Your settings stay on this computer only. Press <strong>Reset settings</strong> to go back to normal.</li></ul></div><div class="row" style="margin-top:6px"><button class="secondary read-topic" type="button">🔊 Read this to me</button></div></details>
 <details class="help-topic" id="help-bode"><summary>🙂 When BodE gives a friendly reply</summary><div class="topic-body"><p>If you type "I don't know", random letters, or ask for the answer, BodE gives you a friendly tip instead of checking. Nothing is checked. Try writing what you already know, even one idea. Press <strong>Show the reference</strong> to find where to look.</p></div><div class="row" style="margin-top:6px"><button class="secondary read-topic" type="button">🔊 Read this to me</button></div></details>
 <details class="help-topic" id="help-tell"><summary>💬 Telling your teacher about a problem</summary><div class="topic-body"><ol><li>Open <strong>Tell your teacher about a problem or an idea</strong> at the top of the page.</li><li>Choose if your message is about your question or about the whole program.</li><li>Choose what happened, write a short message, and press <strong>Send to my teacher</strong>.</li></ol><p>Use it when BodE's colour looks wrong, when something is confusing, or when something does not work. Your teacher reads the messages later. BodE does not answer them. If you need help now, ask your teacher in class.</p></div><div class="row" style="margin-top:6px"><button class="secondary read-topic" type="button">🔊 Read this to me</button></div></details>
-<details class="help-topic" id="help-privacy"><summary>🔒 Privacy</summary><div class="topic-body"><ul><li>Do not type your name, student number, email, or any personal or health information.</li><li>To improve this tool, your answer, the question, the result and the attempt number are kept for up to 90 days, without your name. Messages you send to your teacher are kept the same way.</li><li>Your sign-in ends when you close the browser, or after 8 hours. Press <strong>Log out</strong> when you finish on a shared computer.</li></ul></div><div class="row" style="margin-top:6px"><button class="secondary read-topic" type="button">🔊 Read this to me</button></div></details>
+<details class="help-topic" id="help-privacy"><summary>🔒 Privacy</summary><div class="topic-body"><ul><li>Do not type your name, student number, email, or any personal or health information.</li><li>To improve this tool, your answer, the question, the result and the attempt number are kept for up to 90 days, without your name. Messages you send to your teacher are kept the same way.</li><li>This computer gets a random number, not your name. It only lets your teacher count how many computers use BodE.</li><li>Your sign-in ends when you close the browser, or after 8 hours. Press <strong>Log out</strong> when you finish on a shared computer.</li></ul></div><div class="row" style="margin-top:6px"><button class="secondary read-topic" type="button">🔊 Read this to me</button></div></details>
 <details class="help-topic" id="help-stuck"><summary>🧑‍🏫 If something goes wrong</summary><div class="topic-body"><ul><li><strong>Question check needed</strong>: choose the right question, or paste your question wording.</li><li><strong>Cannot connect</strong>: check your internet and try again.</li><li><strong>Very busy today</strong>: try again later or tomorrow.</li><li>Still stuck? Ask your teacher.</li></ul></div><div class="row" style="margin-top:6px"><button class="secondary read-topic" type="button">🔊 Read this to me</button></div></details>
 </div>
 <div class="row" style="justify-content:center;margin-top:8px"><button class="secondary" id="readGuideBtn" type="button">🔊 Read the whole guide to me</button></div>
@@ -615,12 +615,26 @@ function pendingReplies(){try{const q=JSON.parse(sessionStorage.getItem(REPLY_QU
 function queueReply(type){try{const q=pendingReplies();q.push({assessment:$('assessment').value,key:currentKey,type});sessionStorage.setItem(REPLY_QUEUE_KEY,JSON.stringify(q.slice(-20)))}catch{}}
 function clearReplies(){try{sessionStorage.removeItem(REPLY_QUEUE_KEY)}catch{}}
 const ANONYMOUS_SESSION_STORAGE_KEY='individual-support-anonymous-session';
-function anonymousSessionId(){
+// 25 Oct 2026: a random number for this computer (browser), kept in localStorage, so the teacher report can count
+// how many computers use BodE. It is never linked to a name. It is sent joined to the visit number:
+// "<computer>-<visit>" (73 characters); the analytics Worker splits them.
+const ANONYMOUS_DEVICE_STORAGE_KEY='individual-support-anonymous-device';
+const UUID_PATTERN=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+function anonymousDeviceId(){
   try{
-    let value=sessionStorage.getItem(ANONYMOUS_SESSION_STORAGE_KEY);
-    if(!value){value=crypto.randomUUID();sessionStorage.setItem(ANONYMOUS_SESSION_STORAGE_KEY,value)}
+    let value=localStorage.getItem(ANONYMOUS_DEVICE_STORAGE_KEY);
+    if(!UUID_PATTERN.test(value||'')){value=crypto.randomUUID();localStorage.setItem(ANONYMOUS_DEVICE_STORAGE_KEY,value)}
     return value;
-  }catch{return crypto.randomUUID()}
+  }catch{return ''}
+}
+function anonymousSessionId(){
+  let value;
+  try{
+    value=sessionStorage.getItem(ANONYMOUS_SESSION_STORAGE_KEY);
+    if(!value){value=crypto.randomUUID();sessionStorage.setItem(ANONYMOUS_SESSION_STORAGE_KEY,value)}
+  }catch{value=crypto.randomUUID()}
+  const device=anonymousDeviceId();
+  return device?device+'-'+value:value;
 }
 
 function clearAttempt(){
