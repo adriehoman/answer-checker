@@ -864,6 +864,8 @@ $('checkBtn').onclick=async()=>{
     let html='<strong>'+d.label+'</strong><br><br>'+d.message;
     if(d.detail)html+='<br><br>'+d.detail;
     if(d.teacherNote)html+='<br><br><em>'+d.teacherNote+'</em>';
+    // Spelling help (28 Oct 2026): show the student how BodE read a joined or misspelt word. Nothing is marked down for it.
+    if(Array.isArray(d.readAs)&&d.readAs.length){const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));html+='<br><br><span class="readas">✏️ Spelling tip: BodE read '+d.readAs.map(([from,to])=>'“'+esc(from)+'” as “'+esc(to)+'”').join(', ')+'.</span>';}
     if(d.escalate)html+='<br><br><strong>Next step:</strong> '+d.escalate;
     if(d.diagnostic){
       html+='<div class="diag"><strong>Teacher diagnostic:</strong><br>Engine: '+(d.diagnostic.engine||'')+
